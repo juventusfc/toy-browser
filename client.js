@@ -51,12 +51,12 @@ class Request {
       connection.on("data", (data) => {
         // 由于是流式传输，所以要把流数据一个个灌给 parser
         // data 是 buffer
-        parser.receive(data.toString());
+        // parser.receive(data.toString());
         // console.log(parser.statusLine);
         // console.log(parser.headers);
         // console.log(parser.current);
 
-        // resolve(data.toString());
+        resolve(data.toString());
         connection.end();
       });
       connection.on("error", (err) => {
