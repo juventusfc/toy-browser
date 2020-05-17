@@ -1,3 +1,4 @@
+// 在 net 包的基础上实现 HTTP
 const net = require("net");
 
 class Request {
