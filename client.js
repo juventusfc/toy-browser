@@ -181,6 +181,10 @@ class TrunkedBodyParser {
     this.isFinished = false;
   }
   receiveChar(char) {
+    if (this.isFinished) {
+      return;
+    }
+
     if (this.currentState === this.WAITING_LENGTH) {
       if (char === "\r") {
         if (this.length === 0) {
