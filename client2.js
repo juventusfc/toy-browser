@@ -54,8 +54,10 @@ class Request {
       connection.on("data", (data) => {
         // 由于 TCP 是流式传输，我们压根不知道 data 是不是一个完整的返回。也就是说， onData 事件可能发生多次。
         // 所以每次触发新的 onData 事件，就将返回的 data 数据流喂给状态机。
-        // resolve(data.toString());
         responseParser.receive(data.toString());
+        if (responseParser.isFinished) {
+          resolve(responseParser.response);
+        }
         connection.end();
       });
 
@@ -90,15 +92,28 @@ class ResponseParser {
     this.headers = {};
     this.headerName = "";
     this.headerValue = "";
+
+    this.bodyParser = null;
+  }
+
+  get isFinished() {
+    return this.bodyParser && this.bodyParser.isFinished;
+  }
+
+  get response() {
+    this.statusLine.match(/HTTP\/1.1 ([0-9]+) ([\s\S]+)/);
+    return {
+      statusCode: RegExp.$1,
+      statusText: RegExp.$2,
+      headers: this.headers,
+      body: this.bodyParser.content.join(""),
+    };
   }
 
   receive(string) {
     for (let i = 0; i < string.length; i++) {
       this.receiveChar(string.charAt(i));
     }
-    console.log(this.statusLine);
-    console.log(this.headers);
-    console.log(this.currentState);
   }
   receiveChar(char) {
     if (this.currentState === this.WAITING_STATUS_LINE) {
@@ -116,6 +131,9 @@ class ResponseParser {
         this.currentState = this.WAITING_HEADER_SPACE;
       } else if (char === "\r") {
         this.currentState = this.WAITING_HEADER_BLOCK_END;
+        if (this.headers["Transfer-Encoding"] === "chunked") {
+          this.bodyParser = new TrunkedBodyParser();
+        }
       } else {
         this.headerName += char;
       }
@@ -139,6 +157,57 @@ class ResponseParser {
     } else if (this.currentState === this.WAITING_HEADER_BLOCK_END) {
       if (char === "\n") {
         this.currentState = this.WAITING_BODY;
+      }
+    } else if (this.currentState === this.WAITING_BODY) {
+      // 查看 \r \n 等
+      // console.log(JSON.stringify(char));
+      this.bodyParser.receiveChar(char);
+    }
+  }
+}
+
+class TrunkedBodyParser {
+  constructor() {
+    this.WAITING_LENGTH = 0;
+    this.WAITING_LENGTH_LINE_END = 1;
+    this.READING_TRUNK = 2;
+    this.WAITING_NEW_LINE = 3;
+    this.WAITING_NEW_LINE_END = 4;
+
+    this.currentState = this.WAITING_LENGTH;
+
+    this.length = 0;
+    this.content = [];
+    this.isFinished = false;
+  }
+  receiveChar(char) {
+    if (this.currentState === this.WAITING_LENGTH) {
+      if (char === "\r") {
+        if (this.length === 0) {
+          this.isFinished = true;
+        }
+        this.currentState = this.WAITING_LENGTH_LINE_END;
+      } else {
+        this.length *= 10;
+        this.length += char.charCodeAt(0) - "0".charCodeAt(0);
+      }
+    } else if (this.currentState === this.WAITING_LENGTH_LINE_END) {
+      if (char === "\n") {
+        this.currentState = this.READING_TRUNK;
+      }
+    } else if (this.currentState === this.READING_TRUNK) {
+      this.content.push(char);
+      this.length--;
+      if (this.length === 0) {
+        this.currentState = this.WAITING_NEW_LINE;
+      }
+    } else if (this.currentState === this.WAITING_NEW_LINE) {
+      if (char === "\r") {
+        this.currentState = this.WAITING_NEW_LINE_END;
+      }
+    } else if (this.currentState === this.WAITING_NEW_LINE_END) {
+      if (char === "\n") {
+        this.currentState = this.WAITING_LENGTH;
       }
     }
   }
