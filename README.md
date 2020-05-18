@@ -1,6 +1,6 @@
 # 玩具浏览器
 
-## Others
+## -----
 
 regex
 
@@ -17,7 +17,7 @@ use `?:()` not to capture
 
 XMLHttpRequest AJAX
 
-## sas
+## -----
 
 该项目用于开发一款玩具浏览器。
 

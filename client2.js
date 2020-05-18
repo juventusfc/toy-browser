@@ -49,8 +49,13 @@ class Request {
         );
       }
 
+      const responseParser = new ResponseParser();
+
       connection.on("data", (data) => {
-        resolve(data.toString());
+        // 由于 TCP 是流式传输，我们压根不知道 data 是不是一个完整的返回。也就是说， onData 事件可能发生多次。
+        // 所以每次触发新的 onData 事件，就将返回的 data 数据流喂给状态机。
+        // resolve(data.toString());
+        responseParser.receive(data.toString());
         connection.end();
       });
 
@@ -67,6 +72,77 @@ class Request {
 }
 
 class Response {}
+
+class ResponseParser {
+  constructor() {
+    this.WAITING_STATUS_LINE = 0;
+    this.WAITING_STATUS_LINE_END = 1;
+    this.WAITING_HEADER_NAME = 2;
+    this.WAITING_HEADER_SPACE = 3;
+    this.WAITING_HEADER_VALUE = 4;
+    this.WAITING_HEADER_LINE_END = 5;
+    this.WAITING_HEADER_BLOCK_END = 6;
+    this.WAITING_BODY = 7;
+
+    this.currentState = this.WAITING_STATUS_LINE;
+
+    this.statusLine = "";
+    this.headers = {};
+    this.headerName = "";
+    this.headerValue = "";
+  }
+
+  receive(string) {
+    for (let i = 0; i < string.length; i++) {
+      this.receiveChar(string.charAt(i));
+    }
+    console.log(this.statusLine);
+    console.log(this.headers);
+    console.log(this.currentState);
+  }
+  receiveChar(char) {
+    if (this.currentState === this.WAITING_STATUS_LINE) {
+      if (char === "\r") {
+        this.currentState = this.WAITING_STATUS_LINE_END;
+      } else {
+        this.statusLine += char;
+      }
+    } else if (this.currentState === this.WAITING_STATUS_LINE_END) {
+      if (char === "\n") {
+        this.currentState = this.WAITING_HEADER_NAME;
+      }
+    } else if (this.currentState === this.WAITING_HEADER_NAME) {
+      if (char === ":") {
+        this.currentState = this.WAITING_HEADER_SPACE;
+      } else if (char === "\r") {
+        this.currentState = this.WAITING_HEADER_BLOCK_END;
+      } else {
+        this.headerName += char;
+      }
+    } else if (this.currentState === this.WAITING_HEADER_SPACE) {
+      if (char === " ") {
+        this.currentState = this.WAITING_HEADER_VALUE;
+      }
+    } else if (this.currentState === this.WAITING_HEADER_VALUE) {
+      if (char === "\r") {
+        this.currentState = this.WAITING_HEADER_LINE_END;
+        this.headers[this.headerName] = this.headerValue;
+        this.headerName = "";
+        this.headerValue = "";
+      } else {
+        this.headerValue += char;
+      }
+    } else if (this.currentState === this.WAITING_HEADER_LINE_END) {
+      if (char === "\n") {
+        this.currentState = this.WAITING_HEADER_NAME;
+      }
+    } else if (this.currentState === this.WAITING_HEADER_BLOCK_END) {
+      if (char === "\n") {
+        this.currentState = this.WAITING_BODY;
+      }
+    }
+  }
+}
 
 void (async function () {
   const request = new Request({
