@@ -13,6 +13,8 @@
 
 ## JavaScript 中的 Mealy 型状态机
 
+状态机的一般套路：
+
 ```javascript
 // 每个函数是一个状态
 // 函数参数就是输入
@@ -28,3 +30,111 @@ while (input) {
   state = state(input);
 }
 ```
+
+状态机中经常使用的一种写法是: 返回某个状态函数的执行结果。分为两种情况：
+
+- 一般情况下，还需要考虑初始状态的特殊情况。比如：
+
+  ```javascript
+  /**
+   * 寻找 `ab`
+   * 在这种情况下，需要警惕字符串中出现类似于 `aab` 的情况
+   * 因为 `aab` 也是符合 `ab` 的
+   * 为了防止第二个 a 被吞掉，需要使用 `start(char)` 执行一遍 start
+   */
+  function match(str) {
+    let state = start;
+    for (let c of str) {
+      state = state(c);
+    }
+    return state === matchB;
+  }
+
+  function start(char) {
+    if (char === "a") {
+      return matchA;
+    }
+    return start;
+  }
+
+  function matchA(char) {
+    if (char === "b") {
+      return matchB;
+    }
+    // return start;
+    return start(char); // !!!!
+  }
+
+  function matchB(char) {
+    return matchB;
+  }
+  ```
+
+- 还有需要考虑如 `abababx` 等**重叠问题**：
+
+  ```javascript
+  function match(str) {
+    let state = start;
+    for (let c of str) {
+      state = state(c);
+    }
+    return state === end;
+  }
+
+  function start(char) {
+    if (char === "a") {
+      return matchA1;
+    }
+    return start;
+  }
+
+  function matchA1(char) {
+    if (char === "b") {
+      return matchB1;
+    }
+    return start(char);
+  }
+
+  function matchB1(char) {
+    if (char === "a") {
+      return matchA2;
+    }
+    return start(char);
+  }
+
+  function matchA2(char) {
+    if (char === "b") {
+      return matchB2;
+    }
+    return start(char);
+  }
+
+  function matchB2(char) {
+    if (char === "a") {
+      return matchA3;
+    }
+    return start(char);
+  }
+
+  function matchA3(char) {
+    if (char === "b") {
+      return matchB3;
+    }
+    return start(char);
+  }
+
+  function matchB3(char) {
+    if (char === "x") {
+      return end;
+    }
+    return matchB2(char); // !!!!
+  }
+
+  function end(char) {
+    return end;
+  }
+
+  const res = match("ababababx");
+
+  console.log(res);
+  ```

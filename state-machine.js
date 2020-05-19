@@ -1,17 +1,64 @@
 function match(str) {
-  let foundA = false;
+  let state = start;
   for (let c of str) {
-    if (c === "a") {
-      foundA = true;
-    } else if (foundA && c === "b") {
-      return true;
-    } else {
-      foundA = false;
-    }
+    state = state(c);
   }
-  return false;
+  return state === end;
 }
 
-const res = match("I am groabot");
+function start(char) {
+  if (char === "a") {
+    return matchA1;
+  }
+  return start;
+}
+
+function matchA1(char) {
+  if (char === "b") {
+    return matchB1;
+  }
+  return start(char);
+}
+
+function matchB1(char) {
+  if (char === "a") {
+    return matchA2;
+  }
+  return start(char);
+}
+
+function matchA2(char) {
+  if (char === "b") {
+    return matchB2;
+  }
+  return start(char);
+}
+
+function matchB2(char) {
+  if (char === "a") {
+    return matchA3;
+  }
+  return start(char);
+}
+
+function matchA3(char) {
+  if (char === "b") {
+    return matchB3;
+  }
+  return start(char);
+}
+
+function matchB3(char) {
+  if (char === "x") {
+    return end;
+  }
+  return matchB2(char);
+}
+
+function end(char) {
+  return end;
+}
+
+const res = match("ababababx");
 
 console.log(res);
