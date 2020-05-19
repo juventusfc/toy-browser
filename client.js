@@ -1,5 +1,6 @@
 // 在 net 包的基础上实现 HTTP
 const net = require("net");
+const parser = require("./parser");
 
 class Request {
   constructor(options) {
@@ -72,8 +73,6 @@ class Request {
     });
   }
 }
-
-class Response {}
 
 class ResponseParser {
   constructor() {
@@ -228,5 +227,6 @@ void (async function () {
     },
   });
   const response = await request.send();
-  console.log(response);
+
+  let dom = parser.parseHTML(response.body);
 })();
