@@ -1,8 +1,28 @@
+/**
+ * token: { 是 html 传进来后， 经过 parser 得到的有效信息段
+ *   type: 'startTag || endTag || text ',
+ *   tagName: '',
+ *   otherAttributes: '',
+ *   ...
+ * }
+ *
+ * element = { 是 DOM 中的 element 节点
+ *   type: "element",
+ *   children: [],
+ *   attributes: [],
+ * }
+ *
+ * textNode: { 是 DOM 中的 text 节点
+ *   type: "text",
+ *   content: "",
+ * }
+ */
+
 let currentToken = null;
 let currentAttribute = null;
+let currentTextNode = null;
 
 let stack = [{ type: "document", children: [] }];
-let currentTextNode = null;
 
 function emit(token) {
   let top = stack[stack.length - 1];
