@@ -1,24 +1,5 @@
 # 玩具浏览器
 
-## -----
-
-regex
-
-`string.match(regex)`
-
-use `()` to capture
-
-use `?:()` not to capture
-
-时间复杂度：
-
-- 如果有 `\1`，就不是 o(n)
-- 一般情况下，是 o(n)
-
-XMLHttpRequest AJAX
-
-## -----
-
 该项目用于开发一款玩具浏览器。
 
 ![总体流程](./images/browser-process.png)

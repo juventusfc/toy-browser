@@ -21,7 +21,7 @@
 
 let currentToken = null;
 let currentAttribute = null;
-let currentTextNode = null;
+let currentTextNode = null; // 挂在栈顶元素的 children 中
 
 let stack = [{ type: "document", children: [] }];
 
