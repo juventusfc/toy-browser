@@ -3,10 +3,11 @@
  *   type: 'startTag || endTag || text ',
  *   tagName: '',
  *   otherAttributes: '',
+ *   content: ''
  *   ...
  * }
  *
- * element = { 是 DOM 中的 element 节点
+ * element = { 是 DOM 中的 element 节点，由类似 <p>some text</p> 的代码段组成
  *   type: "element",
  *   children: [],
  *   attributes: [],
@@ -60,6 +61,7 @@ function emit(token) {
     }
     currentTextNode = null;
   } else if (token.type === "text") {
+    // 文本节点不入栈
     if (currentTextNode == null) {
       currentTextNode = {
         type: "text",
@@ -129,7 +131,7 @@ function beforeAttributeName(c) {
   if (c.match(/^[\t\n\f ]$/)) {
     return beforeAttributeName;
   } else if (c === "/" || c === ">" || c === EOF) {
-    return attributeName(c);
+    return afterAttributeName(c);
   } else if (c === "=") {
   } else {
     currentAttribute = {
@@ -179,7 +181,7 @@ function doubleQuotedAttributeValue(c) {
 }
 
 function singleQuotedAttributeValue(c) {
-  if (c === '"') {
+  if (c === "'") {
     currentToken[currentAttribute.name] = currentAttribute.value;
     return afterQuotedAttributeValue;
   } else if (c === "\u0000") {
@@ -201,8 +203,7 @@ function afterQuotedAttributeValue(c) {
     return data;
   } else if (c === EOF) {
   } else {
-    currentAttribute.value += c;
-    return doubleQuotedAttributeValue;
+    return beforeAttributeName(c);
   }
 }
 
@@ -277,7 +278,6 @@ function parseHTML(html) {
     state = state(c);
   }
   state = state(EOF); // 表示文件结尾
-  console.log(stack[0]);
   return stack[0];
 }
 
