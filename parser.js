@@ -7,13 +7,14 @@
  *   ...
  * }
  *
+ * element 是语法树上的概念，tag 是程序员在写代码时文本上的东西
  * element = { 是 DOM 中的 element 节点，由类似 <p>some text</p> 的代码段组成
  *   type: "element",
- *   children: [],
+ *   children: [], // 包含子 element节点 以及 Text 节点
  *   attributes: [],
  * }
  *
- * textNode: { 是 DOM 中的 text 节点
+ * textNode: { 是 DOM 中的 Text 节点
  *   type: "text",
  *   content: "",
  * }
@@ -38,7 +39,7 @@ function emit(token) {
     element.tagName = token.tagName;
 
     for (let p in token) {
-      if (p !== "type" || p !== "tagName") {
+      if (p !== "type" && p !== "tagName") {
         element.attributes.push({
           name: p,
           value: token[p],
