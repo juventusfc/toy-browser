@@ -32,12 +32,36 @@ Request = Request-Line
 
 ![response-example](./images/response.png)
 
-## parse
+## Parse
 
 [HTML 标准](https://html.spec.whatwg.org/multipage/parsing.html#tokenization)
 
-## CSS computing
+生成 DOM 树：
 
-## layout
+1. 使用状态机生成各个 token
+2. 将 token 赋给 element
+3. 将 element 放入 stack 中
 
-## render
+## CSS Computing
+
+浏览器中，都是先收集到所有的 CSS 规则，然后再应用给 DOM。如果之后 CSS 规则变了，很可能会引起 CSS 规则重新计算，然后重新再应用给 DOM，进而引起重排和重绘。
+
+将 CSS 挂载到 DOM 树上:
+
+1. 收集 CSS 规则
+
+   遇到 `</style>` 时， 将栈顶 children 中的 TextNode 中的 content 加到 CSS 规则里
+
+2. 添加调用
+
+   在生成一个新的 element 的时候，立即添加生成 CSS
+
+3. 获取父元素序列
+4. 拆分选择器
+5. 计算选择器与元素的匹配关系
+6. 在 element 上生成 computedStyle 属性
+7. 确定规则覆盖关系
+
+## Layout
+
+## Render

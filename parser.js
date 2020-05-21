@@ -88,12 +88,15 @@ function compare(sp1, sp2) {
 }
 
 function computeCSS(element) {
+  // 获取父元素序列
   var elements = stack.slice().reverse();
+
   if (!element.computedStyle) {
     element.computedStyle = {};
   }
 
   for (let rule of rules) {
+    // 拆分选择器
     var selectorParts = rule.selectors[0].split(" ").reverse();
 
     // 判断是否匹配
@@ -108,6 +111,7 @@ function computeCSS(element) {
       }
     }
 
+    let matched = false;
     if (j >= selectorParts.length) {
       matched = true;
     }
