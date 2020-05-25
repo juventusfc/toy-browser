@@ -20,6 +20,7 @@
  * }
  */
 const css = require("css");
+const layout = require("./layout.js");
 
 const EOF = Symbol("EOF");
 
@@ -176,6 +177,7 @@ function emit(token) {
       }
       stack.pop();
     }
+    layout(top);
     currentTextNode = null;
   } else if (token.type === "text") {
     // 文本节点不入栈
