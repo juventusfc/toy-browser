@@ -319,7 +319,7 @@ function initAlgorithmParams(elementStyle) {
     mainStart, // 主轴开始位置
     mainEnd, // 主轴结束位置
     mainSign, // 沿着主轴的方向
-    mainBase,
+    mainBase, // 第一个 item 的开始位置
     crossSize,
     crossStart,
     crossEnd,
