@@ -1,8 +1,8 @@
 // 在 net 包的基础上实现 HTTP
 const net = require("net");
-const images = require("images");
+// const images = require("images");
 const parser = require("./parser");
-const render = require("./render");
+// const render = require("./render");
 
 class Request {
   constructor(options) {
@@ -232,8 +232,8 @@ void (async function () {
 
   let dom = parser.parseHTML(response.body);
 
-  let viewPort = images(800, 600);
+  // let viewPort = images(800, 600);
 
-  render(viewPort, dom);
-  viewPort.save("viewPort.jpg");
+  // render(viewPort, dom);
+  // viewPort.save("viewPort.jpg");
 })();

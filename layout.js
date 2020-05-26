@@ -1,22 +1,4 @@
-function getStyle(element) {
-  if (!element.style) {
-    element.style = {};
-  }
-
-  for (let prop in element.computedStyle) {
-    element.style[prop] = element.computedStyle[prop].value;
-
-    if (element.style[prop].toString().match(/px$/)) {
-      element.style[prop] = parseInt(element.style[prop]);
-    }
-
-    if (element.style[prop].toString().match(/^[0-9\.]+$/)) {
-      element.style[prop] = parseInt(element.style[prop]);
-    }
-  }
-
-  return element.style;
-}
+const getStyle = require("./utils/getStyle");
 
 function layout(element) {
   if (!element.computedStyle) {
@@ -29,43 +11,46 @@ function layout(element) {
     return;
   }
 
-  // 获取子元素
   let items = element.children.filter((e) => e.type === "element");
-
   let style = elementStyle;
 
-  // 统一设为 null， 方便之后统一判断
   ["width", "height"].forEach((size) => {
-    if (style[size] === "auto" || style[size] === "") {
+    if (style[size] === "auto" || !style[size]) {
       style[size] = null;
     }
   });
 
-  // init container properties
+  ////////// 定义主轴、交叉轴 - 开始 //////////
+
+  // 确定主轴方向
   if (!style.flexDirection || style.flexDirection === "auto") {
     style.flexDirection = "row";
   }
 
+  // 排不下是否换行
   if (!style.flexWrap || style.flexWrap === "auto") {
     style.flexWrap = "nowrap";
   }
 
-  if (!style.alignItems || style.alignItems === "auto") {
-    style.alignItems = "stretch";
-  }
-
+  // 沿着主轴的对齐方式
   if (!style.justifyContent || style.justifyContent === "auto") {
     style.justifyContent = "flex-start";
   }
 
+  // 沿着交叉轴的对齐方式 - 单行中的元素
+  if (!style.alignItems || style.alignItems === "auto") {
+    style.alignItems = "stretch";
+  }
+
+  // 沿着交叉轴的对齐方式 - 多行之间
   if (!style.alignContent || style.alignContent === "auto") {
     style.alignContent = "stretch";
   }
 
-  let mainSize, // 属性名
-    mainStart, // 属性名
-    mainEnd, // 属性名
-    mainSign,
+  let mainSize, // flex item 占据的主轴空间
+    mainStart, // 主轴开始位置
+    mainEnd, // 主轴结束位置
+    mainSign, // 沿着主轴的方向
     mainBase,
     crossSize,
     crossStart,
@@ -80,7 +65,7 @@ function layout(element) {
     mainSign = +1;
     mainBase = 0;
 
-    crossSign = "height";
+    crossSize = "height";
     crossStart = "top";
     crossEnd = "bottom";
   } else if (style.flexDirection === "row-reverse") {
@@ -90,7 +75,7 @@ function layout(element) {
     mainSign = -1;
     mainBase = style.width;
 
-    crossSign = "height";
+    crossSize = "height";
     crossStart = "top";
     crossEnd = "bottom";
   } else if (style.flexDirection === "column") {
@@ -100,7 +85,7 @@ function layout(element) {
     mainSign = +1;
     mainBase = 0;
 
-    crossSign = "width";
+    crossSize = "width";
     crossStart = "left";
     crossEnd = "right";
   } else if (style.flexDirection === "column-reverse") {
@@ -110,7 +95,7 @@ function layout(element) {
     mainSign = -1;
     mainBase = style.height;
 
-    crossSign = "width";
+    crossSize = "width";
     crossStart = "left";
     crossEnd = "right";
   }
@@ -121,23 +106,29 @@ function layout(element) {
     crossEnd = tmp;
 
     crossSign = -1;
+    // TODO
+    // crossBase 还没计算
   } else {
-    crossBase = 0;
     crossSign = +1;
+    crossBase = 0;
   }
 
-  // 父元素没有 mainsize 时，父元素的 mainsize 由其子元素撑开
+  // 父元素没有 mainSize 时，父元素的 mainSize 由其子元素撑开
   let isAutoMainSize = false;
   if (!style[mainSize]) {
     elementStyle[mainSize] = 0;
     for (let i = 0; i < items.length; i++) {
       let itemStyle = getStyle(items[i]);
-      if (itemStyle[mainSize] !== null || itemStyle[mainSize] !== void 0) {
-        elementStyle[mainSize] = elementStyle[mainSize] + itemStyle[mainSize];
+      if (itemStyle[mainSize]) {
+        elementStyle[mainSize] += itemStyle[mainSize];
       }
     }
     isAutoMainSize = true;
   }
+
+  ////////// 定义主轴、交叉轴 - 结束 //////////
+
+  ////////// 收集元素进行 - 开始 //////////
 
   let flexLine = [];
   let flexLines = [flexLine];
@@ -146,21 +137,21 @@ function layout(element) {
   let crossSpace = 0;
 
   for (let i = 0; i < items.length; i++) {
-    let itemStyle = getStyle(item[i]);
+    let itemStyle = getStyle(items[i]);
 
-    if (itemStyle[mainSize] === null) {
+    if (!itemStyle[mainSize]) {
       itemStyle[mainSize] = 0;
     }
 
     // 子元素的 flex 属性，代表子元素是可伸缩的，肯定能放在当前行。
     // 在这个项目中，只管 `flex-basis`
-    if (itemStyle.flex) {
-      flexLine.push(item);
-    } else if (style.flexWrap === "nowrap" && isAutoMainSize) {
+    if (style.flexWrap === "nowrap" && isAutoMainSize) {
       mainSpace -= itemStyle[mainSize];
-      if (itemStyle[crossSize] !== null && itemStyle[crossSize] !== void 0) {
+      if (itemStyle[crossSize]) {
         crossSpace = Math.max(crossSpace, itemStyle[crossSize]);
       }
+      flexLine.push(item);
+    } else if (itemStyle.flex) {
       flexLine.push(item);
     } else {
       if (itemStyle[mainSize] > style[mainSize]) {
@@ -186,6 +177,9 @@ function layout(element) {
   }
 
   flexLine.mainSpace = mainSpace;
+  ////////// 收集元素进行 - 结束 //////////
+  /**
+
 
   // 计算主轴，先将非flex的子元素排好，计算出 mainspace，然后用flex的子元素其填满
 
@@ -390,6 +384,7 @@ function layout(element) {
     }
     crossBase += crossSign * (lineCrossSize + step);
   });
+  */
 }
 
 module.exports = layout;
