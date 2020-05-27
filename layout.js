@@ -192,8 +192,6 @@ function layout(element) {
 
   ////////// 计算交叉轴  //////////
 
-  // var crossSpace;
-
   if (!elementStyle[crossSize]) {
     crossSpace = 0;
     elementStyle[crossSize] = 0;
@@ -214,9 +212,7 @@ function layout(element) {
     crossBase = 0;
   }
 
-  var lineSize = elementStyle[crossSize] / flexLines.length;
-
-  var step;
+  let step;
 
   if (elementStyle.alignContent === "flex-start") {
     crossBase += 0;
@@ -249,18 +245,18 @@ function layout(element) {
   }
 
   flexLines.forEach(function (items) {
-    var lineCrossSize =
+    let lineCrossSize =
       elementStyle.alignContent === "stretch"
         ? items.crossSpace + crossSpace / flexLines.length
         : items.crossSpace;
 
     for (let i = 0; i < items.length; i++) {
-      var item = items[i];
-      var itemStyle = getStyle(item);
+      let item = items[i];
+      let itemStyle = getStyle(item);
 
-      var align = itemStyle.alignSelf || elementStyle.alignItems;
+      let align = itemStyle.alignSelf || elementStyle.alignItems;
 
-      if (item === null) {
+      if (!itemStyle[crossSize]) {
         itemStyle[crossSize] = align === "stretch" ? lineCrossSize : 0;
       }
 
@@ -271,9 +267,9 @@ function layout(element) {
       }
 
       if (align === "flex-end") {
-        itemStyle[crossStart] = crossBase;
-        itemStyle[crossEnd] =
-          itemStyle[crossStart] - crossSign * itemStyle[crossSize];
+        itemStyle[crossEnd] = crossBase + crossSign * lineCrossSize;
+        itemStyle[crossStart] =
+          itemStyle[crossEnd] - crossSign * itemStyle[crossSize];
       }
 
       if (align === "center") {
