@@ -7,43 +7,46 @@ const server = http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end(
     `<html maaa=a>
-<head>
-    <style>
-        .outer {
-          width: 400px;
-          height: 400px;
-          background-color: black;
-          display: flex;
-        }
 
-        .left {
-            flex: 1;
-            background-color: red;
-
-        }
-
-        .center {
-          width: 100px;
-          background-color: yellow;
-
-         }
-
-        .right {
-            flex: 2;
-            background-color: blue;
-
-        }
-    </style>
-</head>
-<body>
-  <div class='outer'>
-    <div class="left"> </div>
-    <div class="center"> </div>
-
-    <div class="right"></div>
-  </div>
-</body>
-</html>`
+    <head>
+        <style>
+            .outer {
+                width: 400px;
+                height: 400px;
+                background-color: rgb(255,255,255);
+                display: flex;
+            }
+    
+            .left {
+                flex: 1;
+                background-color: rgb(199,199,199);
+    
+            }
+    
+            .center {
+                width: 100px;
+                background-color: rgb(1,222,222);
+    
+            }
+    
+            .right {
+                flex: 2;
+                background-color: rgb(111,1,111);
+    
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class='outer'>
+            <div class="left"> </div>
+            <div class="center"> </div>
+    
+            <div class="right"></div>
+        </div>
+    </body>
+    
+    </html>`
   );
 });
 
