@@ -9,30 +9,37 @@ const server = http.createServer((req, res) => {
     `<html maaa=a>
 <head>
     <style>
-    .outer {
-      width: 400px;
-      height: 400px;
-      background-color: yellow;
-      display: flex;
-      justify-content: space-evenly;
-  }
+        .outer {
+          width: 400px;
+          height: 400px;
+          background-color: black;
+          display: flex;
+        }
 
-  .left {
-      flex: 150px;
-      background-color: red;
+        .left {
+            flex: 1;
+            background-color: red;
 
-  }
+        }
 
-  .right {
-      flex: 150px;
-      background-color: blue;
+        .center {
+          width: 100px;
+          background-color: yellow;
 
-  }
+         }
+
+        .right {
+            flex: 2;
+            background-color: blue;
+
+        }
     </style>
 </head>
 <body>
   <div class='outer'>
     <div class="left"> </div>
+    <div class="center"> </div>
+
     <div class="right"></div>
   </div>
 </body>

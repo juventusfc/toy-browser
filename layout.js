@@ -36,10 +36,9 @@ function layout(element) {
     crossBase,
   } = initAlgorithmParams(elementStyle);
 
-  // 父元素没有 mainSize 时，父元素的 mainSize 由其子元素撑开
-  let isAutoMainSize = initAutoMainSize(elementStyle, mainSize, items);
-
   ////////// 收集元素进行  //////////
+
+  let isAutoMainSize = initAutoMainSize(elementStyle, mainSize, items);
 
   let flexLine = [];
   let flexLines = [flexLine];
@@ -48,31 +47,32 @@ function layout(element) {
   let crossSpace = 0;
 
   for (let i = 0; i < items.length; i++) {
-    let itemStyle = getStyle(items[i]);
+    let item = items[i];
+    let itemStyle = getStyle(item);
 
     if (!itemStyle[mainSize]) {
       itemStyle[mainSize] = 0;
     }
 
-    // 子元素的 flex 属性，代表子元素是可伸缩的，肯定能放在当前行。
-    // 在这个项目中，只管 `flex-basis`
-    if (elementStyle.flexWrap === "nowrap" && isAutoMainSize) {
+    if (elementStyle.flexWrap === "nowrap" || isAutoMainSize) {
       mainSpace -= itemStyle[mainSize];
       if (itemStyle[crossSize]) {
         crossSpace = Math.max(crossSpace, itemStyle[crossSize]);
       }
       flexLine.push(item);
     } else if (itemStyle.flex) {
+      // flex 只设置缩放比例
       flexLine.push(item);
     } else {
       if (itemStyle[mainSize] > elementStyle[mainSize]) {
         itemStyle[mainSize] = elementStyle[mainSize];
       }
 
-      // 当前行放不下，另起一行
       if (mainSpace < itemStyle[mainSize]) {
         flexLine.mainSpace = mainSpace;
         flexLine.crossSpace = crossSpace;
+
+        // 创建新的 flexLine
         flexLine = [item];
         flexLines.push(flexLine);
         mainSpace = elementStyle[mainSize];
@@ -80,7 +80,7 @@ function layout(element) {
       } else {
         flexLine.push(item);
       }
-      if (itemStyle[crossSize] !== null && itemStyle[crossSize] !== void 0) {
+      if (itemStyle[crossSize]) {
         crossSpace = Math.max(crossSpace, itemStyle[crossSize]);
       }
       mainSpace -= itemStyle[mainSize];
@@ -88,21 +88,19 @@ function layout(element) {
   }
 
   flexLine.mainSpace = mainSpace;
-  ////////// 收集元素进行 - 结束 //////////
-  /**
-
-
-  // 计算主轴，先将非flex的子元素排好，计算出 mainspace，然后用flex的子元素其填满
 
   if (elementStyle.flexWrap === "nowrap" || isAutoMainSize) {
-    flexLine.crossSpace =
-      elementStyle[crossSize] !== undefined ? elementStyle[crossSize] : crossSpace;
+    flexLine.crossSpace = elementStyle[crossSize]
+      ? elementStyle[crossSize]
+      : crossSpace;
   } else {
-    flexLine.crossSize = crossSpace;
+    flexLine.crossSpace = crossSpace;
   }
 
+  ////////// 计算主轴  //////////
+
   if (mainSpace < 0) {
-    // overflow
+    // overflow 只会出现在单行里。将每一个等比例缩放。
     let scale = elementStyle[mainSize] / (elementStyle[mainSize] - mainSpace);
     let currentMain = mainBase;
     for (let i = 0; i < items.length; i++) {
@@ -123,23 +121,23 @@ function layout(element) {
   } else {
     // process each flex line
     flexLines.forEach(function (items) {
-      var mainSpace = items.mainSpace;
-      var flexTotal = 0;
-      for (let i = 0; i < items.length; i++) {
-        var item = items[i];
-        var itemStyle = getStyle(item);
+      let mainSpace = items.mainSpace;
 
-        if (itemStyle.flex !== null && itemStyle.flex !== void 0) {
+      let flexTotal = 0;
+      for (let i = 0; i < items.length; i++) {
+        let item = items[i];
+        let itemStyle = getStyle(item);
+
+        if (itemStyle.flex) {
           flexTotal += itemStyle.flex;
-          continue;
         }
       }
 
       if (flexTotal > 0) {
-        var currentMain = mainBase;
+        let currentMain = mainBase;
         for (let i = 0; i < items.length; i++) {
-          var item = items[i];
-          var itemStyle = getStyle(item);
+          let item = items[i];
+          let itemStyle = getStyle(item);
 
           if (itemStyle.flex) {
             itemStyle[mainSize] = (mainSpace / flexTotal) * itemStyle.flex;
@@ -151,36 +149,39 @@ function layout(element) {
           currentMain = itemStyle[mainEnd];
         }
       } else {
+        // 没有 flex 时， justify-content 开始起作用
+        let currentMain; // 当前主轴所在位置
+        let step; // 元素间距
         if (elementStyle.justifyContent === "flex-start") {
-          var currentMain = mainBase;
-          var step = 0;
+          currentMain = mainBase;
+          step = 0;
         }
 
         if (elementStyle.justifyContent === "flex-end") {
-          var currentMain = mainSpace * mainSign + mainBase;
-          var step = 0;
+          currentMain = mainSpace * mainSign + mainBase;
+          step = 0;
         }
 
         if (elementStyle.justifyContent === "center") {
-          var currentMain = (mainSpace / 2) * mainSign + mainBase;
-          var step = 0;
+          currentMain = (mainSpace / 2) * mainSign + mainBase;
+          step = 0;
         }
 
         if (elementStyle.justifyContent === "space-between") {
-          var step = (mainSpace / (items.length - 1)) * mainSign;
-          var currentMain = step / 2 + mainBase;
+          step = (mainSpace / (items.length - 1)) * mainSign;
+          currentMain = mainBase;
         }
 
         if (elementStyle.justifyContent === "space-around") {
-          var step = (mainSpace / items.length) * mainSign;
-          var currentMain = step / 2 + mainBase;
+          step = (mainSpace / items.length) * mainSign;
+          currentMain = step / 2 + mainBase;
         }
 
         for (let i = 0; i < items.length; i++) {
-          var item = items[i];
-          var itemStyle = getStyle(item);
+          let item = items[i];
+          let itemStyle = getStyle(item);
 
-          itemStyle[(mainStart, currentMain)];
+          itemStyle[mainStart] = currentMain;
           itemStyle[mainEnd] =
             itemStyle[mainStart] + mainSign * itemStyle[mainSize];
           currentMain = itemStyle[mainEnd] + step;
@@ -189,7 +190,9 @@ function layout(element) {
     });
   }
 
-  var crossSpace;
+  ////////// 计算交叉轴  //////////
+
+  // var crossSpace;
 
   if (!elementStyle[crossSize]) {
     crossSpace = 0;
@@ -295,7 +298,6 @@ function layout(element) {
     }
     crossBase += crossSign * (lineCrossSize + step);
   });
-  */
 }
 
 // 父元素没有 mainSize 时，父元素的 mainSize 由其子元素撑开
@@ -315,9 +317,9 @@ function initAutoMainSize(elementStyle, mainSize, items) {
 }
 
 function initAlgorithmParams(elementStyle) {
-  let mainSize, // flex item 占据的主轴空间
-    mainStart, // 主轴开始位置
-    mainEnd, // 主轴结束位置
+  let mainSize, // flex item 占据的主轴空间，是属性名
+    mainStart, // 主轴开始位置，是属性名
+    mainEnd, // 主轴结束位置，是属性名
     mainSign, // 沿着主轴的方向
     mainBase, // 第一个 item 的开始位置
     crossSize,
